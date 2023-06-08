@@ -1,3 +1,3 @@
-# kaggle
-kaggleのコンペ用リポジトリ
+# kaggle-signate
+kaggleやSIGNATEのコンペ用リポジトリ
 
