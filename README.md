@@ -1,1 +1,3 @@
 # kaggle
+kaggleのコンペ用リポジトリ
+
