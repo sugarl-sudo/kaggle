@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "kaggle-signate"
+version = "0.1.0"
+description = ""
+authors = ["sugarl-sudo <sato.yuta0112@gmail.com>"]
+readme = "README.md"
+packages = [{include = "kaggle_signate"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+signate = "^0.9.10"
+lightgbm = "^4.4.0"
+scikit-learn = "^1.5.0"
+pandas = "^2.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
