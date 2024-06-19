@@ -1,10 +1,12 @@
 from catboost import CatBoostClassifier, Pool
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import sklearn
+import numpy as np
 
 
 class CatBoost_Trainer:
-    def __init__(self, params, data, num_round=100, early_stopping_rounds=10, test_size=0.2):
+    def __init__(self, params, data, num_round=100, early_stopping_rounds=10, test_size=0.1):
         self.params = params
         self.data = data
         self.num_round = num_round
@@ -16,11 +18,12 @@ class CatBoost_Trainer:
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X, y, test_size=test_size, random_state=42
         )
-        self.model = CatBoostClassifier(**self.params, iterations=self.num_round, early_stopping_rounds=self.early_stopping_rounds)
+        self.cat_features = ["sex", "smoker", "region"]
+        self.model = CatBoostClassifier(**self.params)
 
     def train(self):
-        train_pool = Pool(self.X_train, label=self.y_train)
-        eval_pool = Pool(self.X_test, label=self.y_test)
+        train_pool = Pool(self.X_train, label=self.y_train, cat_features=self.cat_features)
+        eval_pool = Pool(self.X_test, label=self.y_test, cat_features=self.cat_features)
         self.model.fit(train_pool, eval_set=eval_pool, verbose=False)
 
     def evaluation(self):
@@ -39,4 +42,29 @@ class CatBoost_Trainer:
 
     def predict(self, X):
         pred = self.model.predict(X)
-        return pred
+        return pred.flatten()
+
+    def optuna_obj(self, trial):
+        train_pool = Pool(self.X_train, self.y_train, cat_features=self.cat_features)
+        test_pool = Pool(self.X_test, self.y_test, cat_features=self.cat_features)
+
+        # パラメータの指定
+        params = {
+            "iterations": trial.suggest_int("iterations", 50, 300),
+            "depth": trial.suggest_int("depth", 4, 10),
+            "learning_rate": trial.suggest_loguniform("learning_rate", 0.01, 0.3),
+            "random_strength": trial.suggest_int("random_strength", 0, 100),
+            "bagging_temperature": trial.suggest_loguniform("bagging_temperature", 0.01, 100.00),
+            "od_type": trial.suggest_categorical("od_type", ["IncToDec", "Iter"]),
+            "od_wait": trial.suggest_int("od_wait", 10, 50),
+        }
+
+        # 学習
+        model = CatBoostClassifier(**params)
+        model.fit(train_pool)
+        # 予測
+        preds = model.predict(test_pool)
+        pred_labels = np.rint(preds)
+        # 精度の計算
+        accuracy = sklearn.metrics.accuracy_score(self.y_test, pred_labels)
+        return 1.0 - accuracy
