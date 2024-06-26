@@ -1,6 +1,7 @@
 from catboost import CatBoostClassifier, Pool
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from imblearn.over_sampling import SMOTE
 import sklearn
 import numpy as np
 
@@ -15,9 +16,15 @@ class CatBoost_Trainer:
         # データセットのトレーニングセットとテストセットへの分割
         X = data.drop(columns=["target"])
         y = data["target"]
+        # X_train, self.X_test, y_train, self.y_test = train_test_split(
+        #     X, y, test_size=test_size, random_state=42
+        # )
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X, y, test_size=test_size, random_state=42
         )
+        # SMOTEによるオーバーサンプリング
+        # smote = SMOTE()
+        # self.X_train, self.y_train = smote.fit_resample(X_train, y_train)
         self.cat_features = ["sex", "smoker", "region"]
         self.model = CatBoostClassifier(**self.params)
 
@@ -47,6 +54,11 @@ class CatBoost_Trainer:
     def optuna_obj(self, trial):
         train_pool = Pool(self.X_train, self.y_train, cat_features=self.cat_features)
         test_pool = Pool(self.X_test, self.y_test, cat_features=self.cat_features)
+        # クラス重みの調整
+        class_weight_0 = trial.suggest_loguniform('class_weight_0', 0.1, 10.0)
+        class_weight_1 = trial.suggest_loguniform('class_weight_1', 0.1, 10.0)
+        class_weight_2 = trial.suggest_loguniform('class_weight_2', 0.1, 10.0)
+        class_weights = {0: class_weight_0, 1: class_weight_1, 2: class_weight_2}
 
         # パラメータの指定
         params = {
@@ -57,6 +69,8 @@ class CatBoost_Trainer:
             "bagging_temperature": trial.suggest_loguniform("bagging_temperature", 0.01, 100.00),
             "od_type": trial.suggest_categorical("od_type", ["IncToDec", "Iter"]),
             "od_wait": trial.suggest_int("od_wait", 10, 50),
+            "class_weights": class_weights,
+            # "class_weights": trial.suggest_loguniform("class_weights", {0: 1.0, 1: 1.0, 2: 1.0}, {0: 0.5, 1: 5.0, 2: 5.0}, {0: 0.1, 1: 10.0, 2: 10.0})
         }
 
         # 学習

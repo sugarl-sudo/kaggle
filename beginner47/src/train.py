@@ -10,8 +10,6 @@ from catboost import Pool
 import sklearn.metrics
 
 
-
-
 @click.command()
 @click.option("--train_path", type=str, default="./data/train.csv")
 @click.option("--test_path", type=str, default="./data/test.csv")
@@ -33,7 +31,7 @@ def main(train_path, test_path, config_path, model, save_dir):
     elif model == "catboost":
         trainer = CatBoost_Trainer(params, train_data)
     # study = optuna.create_study()
-    # study.optimize(trainer.optuna_obj, n_trials=1000)
+    # study.optimize(trainer.optuna_obj, n_trials=100)
     # print(study.best_params)
     trainer.train()
     trainer.evaluation()

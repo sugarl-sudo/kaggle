@@ -18,6 +18,7 @@ def get_params(model_name):
             'random_strength': 0,
             'bagging_temperature': 0.2873921593868477,
             'od_type': 'IncToDec',
-            'od_wait': 42
+            'od_wait': 42,
+            'class_weights': {0: 0.7422852207066004, 1: 0.7687134075998778, 2: 0.9487452170625182},
             }
     return params
